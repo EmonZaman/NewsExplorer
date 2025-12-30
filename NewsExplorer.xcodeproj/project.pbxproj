@@ -29,22 +29,9 @@
 		73D1E0802F043E5F00B37050 /* NewsExplorerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NewsExplorerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		73D1E0882F043E5F00B37050 /* Exceptions for "NewsExplorer" folder in "NewsExplorer" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = 73D1E05F2F043E5D00B37050 /* NewsExplorer */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		73D1E0622F043E5D00B37050 /* NewsExplorer */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				73D1E0882F043E5F00B37050 /* Exceptions for "NewsExplorer" folder in "NewsExplorer" target */,
-			);
 			path = NewsExplorer;
 			sourceTree = "<group>";
 		};
