@@ -40,6 +40,7 @@ final class NewsListViewController: UIViewController {
         search.obscuresBackgroundDuringPresentation = false
         search.searchBar.placeholder = "Search news..."
         search.searchBar.tintColor = UIColor(named: "AccentColor") ?? .systemBlue
+        search.searchBar.showsCancelButton = true
         return search
     }()
     
@@ -178,6 +179,15 @@ final class NewsListViewController: UIViewController {
             .orEmpty
             .skip(1) // Skip initial empty value
             .bind(to: viewModel.searchQuery)
+            .disposed(by: disposeBag)
+        
+        // Handle search cancel button - reset to initial state
+        searchController.searchBar.rx.cancelButtonClicked
+            .subscribe(onNext: { [weak self] in
+                self?.searchController.searchBar.text = ""
+                self?.searchController.isActive = false
+                self?.viewModel.searchCancelled.accept(())
+            })
             .disposed(by: disposeBag)
         
         // View state handling

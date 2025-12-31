@@ -29,6 +29,7 @@ protocol NewsListViewModelProtocol {
     var loadMoreTrigger: PublishRelay<Void> { get }
     var articleSelected: PublishRelay<Article> { get }
     var searchQuery: BehaviorRelay<String> { get }
+    var searchCancelled: PublishRelay<Void> { get }
     
     // Outputs
     var articles: Observable<[Article]> { get }
@@ -48,7 +49,12 @@ final class NewsListViewModel: NewsListViewModelProtocol {
     let refreshTrigger = PublishRelay<Void>()
     let loadMoreTrigger = PublishRelay<Void>()
     let articleSelected = PublishRelay<Article>()
-    let searchQuery = BehaviorRelay<String>(value: "apple")
+    let searchQuery = BehaviorRelay<String>(value: "")
+    let searchCancelled = PublishRelay<Void>()
+    
+    // MARK: - Constants
+    
+    private let defaultQuery = "technology"
     
     // MARK: - Outputs
     
@@ -121,13 +127,21 @@ final class NewsListViewModel: NewsListViewModelProtocol {
             })
             .disposed(by: disposeBag)
         
-        // Search query changes with debounce - skip initial + empty values
+        // Search query changes with debounce
         searchQuery
             .skip(1) // Skip initial value
-            .debounce(.milliseconds(800), scheduler: MainScheduler.instance)
+            .debounce(.milliseconds(600), scheduler: MainScheduler.instance)
             .distinctUntilChanged()
-            .filter { !$0.isEmpty } // Don't search for empty strings
-            .subscribe(onNext: { [weak self] _ in
+            .subscribe(onNext: { [weak self] query in
+                // Search with query or reset to default
+                self?.fetchNews(isRefresh: true)
+            })
+            .disposed(by: disposeBag)
+        
+        // Handle search cancel - reset to initial state
+        searchCancelled
+            .subscribe(onNext: { [weak self] in
+                self?.searchQuery.accept("")
                 self?.fetchNews(isRefresh: true)
             })
             .disposed(by: disposeBag)
@@ -141,7 +155,7 @@ final class NewsListViewModel: NewsListViewModelProtocol {
         
         viewStateRelay.accept(.loading)
         
-        let query = searchQuery.value.isEmpty ? "apple" : searchQuery.value
+        let query = searchQuery.value.isEmpty ? defaultQuery : searchQuery.value
         
         // Calculate from date (last 30 days to avoid API limitations)
         let fromDate = Calendar.current.date(byAdding: .day, value: -30, to: Date())
