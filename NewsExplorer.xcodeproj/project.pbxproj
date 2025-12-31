@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		738BBA152F04EE0200A59A36 /* RxSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 738BBA142F04EE0200A59A36 /* RxSwift */; };
+		738BBA172F04EE0700A59A36 /* RxCocoa in Frameworks */ = {isa = PBXBuildFile; productRef = 738BBA162F04EE0700A59A36 /* RxCocoa */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		73D1E0772F043E5F00B37050 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +57,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				738BBA172F04EE0700A59A36 /* RxCocoa in Frameworks */,
+				738BBA152F04EE0200A59A36 /* RxSwift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -72,12 +79,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		738BBA132F04EE0200A59A36 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		73D1E0572F043E5D00B37050 = {
 			isa = PBXGroup;
 			children = (
 				73D1E0622F043E5D00B37050 /* NewsExplorer */,
 				73D1E0792F043E5F00B37050 /* NewsExplorerTests */,
 				73D1E0832F043E5F00B37050 /* NewsExplorerUITests */,
+				738BBA132F04EE0200A59A36 /* Frameworks */,
 				73D1E0612F043E5D00B37050 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -112,6 +127,8 @@
 			);
 			name = NewsExplorer;
 			packageProductDependencies = (
+				738BBA142F04EE0200A59A36 /* RxSwift */,
+				738BBA162F04EE0700A59A36 /* RxCocoa */,
 			);
 			productName = NewsExplorer;
 			productReference = 73D1E0602F043E5D00B37050 /* NewsExplorer.app */;
@@ -195,6 +212,9 @@
 			);
 			mainGroup = 73D1E0572F043E5D00B37050;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				738BB9CC2F04E8F800A59A36 /* XCRemoteSwiftPackageReference "RxSwift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 73D1E0612F043E5D00B37050 /* Products */;
 			projectDirPath = "";
@@ -284,6 +304,7 @@
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -316,6 +337,7 @@
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -578,6 +600,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		738BB9CC2F04E8F800A59A36 /* XCRemoteSwiftPackageReference "RxSwift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ReactiveX/RxSwift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 6.9.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		738BBA142F04EE0200A59A36 /* RxSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 738BB9CC2F04E8F800A59A36 /* XCRemoteSwiftPackageReference "RxSwift" */;
+			productName = RxSwift;
+		};
+		738BBA162F04EE0700A59A36 /* RxCocoa */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 738BB9CC2F04E8F800A59A36 /* XCRemoteSwiftPackageReference "RxSwift" */;
+			productName = RxCocoa;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 73D1E0582F043E5D00B37050 /* Project object */;
 }
