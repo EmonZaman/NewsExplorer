@@ -55,12 +55,11 @@ extension Article {
         let isoFormatter = ISO8601DateFormatter()
         isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         
-        // Try with fractional seconds first
+       
         if let date = isoFormatter.date(from: publishedAt) {
             return formatDate(date)
         }
-        
-        // Try without fractional seconds
+   
         isoFormatter.formatOptions = [.withInternetDateTime]
         if let date = isoFormatter.date(from: publishedAt) {
             return formatDate(date)
@@ -76,17 +75,16 @@ extension Article {
         return formatter.string(from: date)
     }
     
-    /// Display title (never nil)
+   
     var displayTitle: String {
         return title.isEmpty ? "No Title" : title
     }
     
-    /// Display description (with fallback)
+
     var displayDescription: String {
         return description ?? "No description available"
     }
-    
-    /// Display author (with fallback)
+ 
     var displayAuthor: String {
         return author ?? source.name
     }
