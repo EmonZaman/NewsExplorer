@@ -210,9 +210,9 @@ final class NewsListViewController: UIViewController {
     // MARK: - Navigation (MVVM - handled directly in ViewController)
     
     private func navigateToArticleDetail(_ article: Article) {
-//        let detailViewModel = ArticleDetailViewModel(article: article)
-//        let detailVC = ArticleDetailViewController(viewModel: detailViewModel)
-//        navigationController?.pushViewController(detailVC, animated: true)
+        let detailViewModel = ArticleDetailViewModel(article: article)
+        let detailVC = ArticleDetailViewController(viewModel: detailViewModel)
+        navigationController?.pushViewController(detailVC, animated: true)
     }
     
     // MARK: - State Handling
