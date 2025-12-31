@@ -122,6 +122,7 @@ final class NetworkService: NetworkServiceProtocol {
                 task.cancel()
             }
         }
+        .subscribe(on: ConcurrentDispatchQueueScheduler(qos: .userInitiated))
         .observe(on: MainScheduler.instance)
     }
     
@@ -148,7 +149,3 @@ final class NetworkService: NetworkServiceProtocol {
         }
     }
 }
-
-
-
-

@@ -173,9 +173,10 @@ final class NewsListViewController: UIViewController {
             .bind(to: refreshControl.rx.isRefreshing)
             .disposed(by: disposeBag)
         
-        // Search query binding
+        // Search query binding - skip initial empty value to prevent duplicate calls
         searchController.searchBar.rx.text
             .orEmpty
+            .skip(1) // Skip initial empty value
             .bind(to: viewModel.searchQuery)
             .disposed(by: disposeBag)
         

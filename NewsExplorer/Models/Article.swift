@@ -5,7 +5,6 @@
 //  Created by Aagontuk on 12/31/25.
 //
 
-
 import Foundation
 
 // MARK: - News API Response
@@ -21,12 +20,17 @@ struct NewsResponse: Codable, Equatable {
 struct Article: Codable, Equatable, Hashable {
     let source: Source
     let author: String?
-    let title: String
+    let title: String?
     let description: String?
     let url: String
     let urlToImage: String?
     let publishedAt: String
     let content: String?
+    
+    /// Returns true if the article has valid required data
+    var isValid: Bool {
+        return title != nil && !title!.isEmpty && !url.isEmpty
+    }
     
     // MARK: - Hashable
     
@@ -77,7 +81,10 @@ extension Article {
     
    
     var displayTitle: String {
-        return title.isEmpty ? "No Title" : title
+        guard let title = title, !title.isEmpty else {
+            return "No Title"
+        }
+        return title
     }
     
 

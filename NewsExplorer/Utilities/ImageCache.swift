@@ -73,32 +73,66 @@ final class ImageCache: ImageCacheProtocol {
     func getImage(for url: URL) -> UIImage? {
         let key = cacheKey(for: url)
         
-        // Check memory cache first
+        // Only check memory cache (fast) - disk cache is checked async
         if let cachedImage = memoryCache.object(forKey: key as NSString) {
             return cachedImage
-        }
-        
-        // Check disk cache
-        if let diskImage = loadImageFromDisk(for: key) {
-            // Store in memory cache for faster access next time
-            let cost = diskImage.jpegData(compressionQuality: 1.0)?.count ?? 0
-            memoryCache.setObject(diskImage, forKey: key as NSString, cost: cost)
-            return diskImage
         }
         
         return nil
     }
     
+    func getImageAsync(for url: URL, completion: @escaping (UIImage?) -> Void) {
+        let key = cacheKey(for: url)
+        
+        // Check memory cache first (fast)
+        if let cachedImage = memoryCache.object(forKey: key as NSString) {
+            completion(cachedImage)
+            return
+        }
+        
+        // Check disk cache asynchronously
+        ioQueue.async { [weak self] in
+            guard let self = self else {
+                DispatchQueue.main.async { completion(nil) }
+                return
+            }
+            
+            if let diskImage = self.loadImageFromDisk(for: key) {
+                // Store in memory cache for faster access next time
+                let cost = diskImage.jpegData(compressionQuality: 0.8)?.count ?? 0
+                self.memoryCache.setObject(diskImage, forKey: key as NSString, cost: cost)
+                DispatchQueue.main.async { completion(diskImage) }
+            } else {
+                DispatchQueue.main.async { completion(nil) }
+            }
+        }
+    }
+    
     func setImage(_ image: UIImage, for url: URL) {
         let key = cacheKey(for: url)
-        let cost = image.jpegData(compressionQuality: 1.0)?.count ?? 0
+        
+        // Downscale large images to reduce memory usage
+        let maxSize: CGFloat = 400
+        let scaledImage: UIImage
+        if image.size.width > maxSize || image.size.height > maxSize {
+            let scale = min(maxSize / image.size.width, maxSize / image.size.height)
+            let newSize = CGSize(width: image.size.width * scale, height: image.size.height * scale)
+            UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+            image.draw(in: CGRect(origin: .zero, size: newSize))
+            scaledImage = UIGraphicsGetImageFromCurrentImageContext() ?? image
+            UIGraphicsEndImageContext()
+        } else {
+            scaledImage = image
+        }
+        
+        let cost = scaledImage.jpegData(compressionQuality: 0.7)?.count ?? 0
         
         // Store in memory cache
-        memoryCache.setObject(image, forKey: key as NSString, cost: cost)
+        memoryCache.setObject(scaledImage, forKey: key as NSString, cost: cost)
         
         // Store on disk asynchronously
         ioQueue.async { [weak self] in
-            self?.saveImageToDisk(image, for: key)
+            self?.saveImageToDisk(scaledImage, for: key)
         }
     }
     
@@ -226,8 +260,10 @@ final class ImageLoader {
         self.cache = cache
         
         let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 30
+        config.timeoutIntervalForRequest = 15 // Reduced timeout
+        config.timeoutIntervalForResource = 30
         config.requestCachePolicy = .returnCacheDataElseLoad
+        config.httpMaximumConnectionsPerHost = 4 // Limit concurrent connections
         self.session = URLSession(configuration: config)
     }
     
@@ -241,58 +277,29 @@ final class ImageLoader {
                 return Disposables.create()
             }
             
-            // Check cache first
+            // Check memory cache first (fast, synchronous)
             if let cachedImage = self.cache.getImage(for: url) {
                 observer.onNext(cachedImage)
                 observer.onCompleted()
                 return Disposables.create()
             }
             
-            // Download image
-            let task = self.session.dataTask(with: url) { [weak self] data, response, error in
-                guard let self = self else {
-                    DispatchQueue.main.async {
-                        observer.onNext(nil)
+            // Check disk cache asynchronously, then download if needed
+            if let imageCache = self.cache as? ImageCache {
+                imageCache.getImageAsync(for: url) { [weak self] cachedImage in
+                    if let cachedImage = cachedImage {
+                        observer.onNext(cachedImage)
                         observer.onCompleted()
+                        return
                     }
-                    return
+                    
+                    // Not in cache, download
+                    self?.downloadImage(from: url, observer: observer)
                 }
-                
-                self.taskQueue.async {
-                    self.activeTasks.removeValue(forKey: url)
-                }
-                
-                if let error = error {
-                    print("[ImageLoader] Error loading image: \(error.localizedDescription)")
-                    DispatchQueue.main.async {
-                        observer.onNext(nil)
-                        observer.onCompleted()
-                    }
-                    return
-                }
-                
-                guard let data = data, let image = UIImage(data: data) else {
-                    DispatchQueue.main.async {
-                        observer.onNext(nil)
-                        observer.onCompleted()
-                    }
-                    return
-                }
-                
-                // Cache the image
-                self.cache.setImage(image, for: url)
-                
-                DispatchQueue.main.async {
-                    observer.onNext(image)
-                    observer.onCompleted()
-                }
+            } else {
+                // Fallback: download directly
+                self.downloadImage(from: url, observer: observer)
             }
-            
-            self.taskQueue.async {
-                self.activeTasks[url] = task
-            }
-            
-            task.resume()
             
             return Disposables.create { [weak self] in
                 self?.taskQueue.async {
@@ -301,6 +308,52 @@ final class ImageLoader {
                 }
             }
         }
+    }
+    
+    private func downloadImage(from url: URL, observer: AnyObserver<UIImage?>) {
+        let task = self.session.dataTask(with: url) { [weak self] data, response, error in
+            guard let self = self else {
+                DispatchQueue.main.async {
+                    observer.onNext(nil)
+                    observer.onCompleted()
+                }
+                return
+            }
+            
+            self.taskQueue.async {
+                self.activeTasks.removeValue(forKey: url)
+            }
+            
+            if error != nil {
+                DispatchQueue.main.async {
+                    observer.onNext(nil)
+                    observer.onCompleted()
+                }
+                return
+            }
+            
+            guard let data = data, let image = UIImage(data: data) else {
+                DispatchQueue.main.async {
+                    observer.onNext(nil)
+                    observer.onCompleted()
+                }
+                return
+            }
+            
+            // Cache the image
+            self.cache.setImage(image, for: url)
+            
+            DispatchQueue.main.async {
+                observer.onNext(image)
+                observer.onCompleted()
+            }
+        }
+        
+        self.taskQueue.async {
+            self.activeTasks[url] = task
+        }
+        
+        task.resume()
     }
     
     func cancelLoad(for url: URL) {

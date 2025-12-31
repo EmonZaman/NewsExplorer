@@ -85,7 +85,7 @@ final class NewsListViewModel: NewsListViewModelProtocol {
     private var currentPage = 1
     private var totalResults = 0
     private var isLoadingMore = false
-    private let pageSize = 20
+    private let pageSize = 10
     
     // MARK: - Initialization
     
@@ -97,8 +97,9 @@ final class NewsListViewModel: NewsListViewModelProtocol {
     // MARK: - Private Methods
     
     private func setupBindings() {
-        // Initial load
+        // Initial load - only triggered by viewDidLoad
         viewDidLoad
+            .take(1) // Ensure only fires once
             .subscribe(onNext: { [weak self] in
                 self?.fetchNews(isRefresh: true)
             })
@@ -106,6 +107,7 @@ final class NewsListViewModel: NewsListViewModelProtocol {
         
         // Pull to refresh
         refreshTrigger
+            .throttle(.seconds(1), scheduler: MainScheduler.instance)
             .subscribe(onNext: { [weak self] in
                 self?.fetchNews(isRefresh: true)
             })
@@ -113,16 +115,18 @@ final class NewsListViewModel: NewsListViewModelProtocol {
         
         // Load more (pagination)
         loadMoreTrigger
+            .throttle(.milliseconds(500), scheduler: MainScheduler.instance)
             .subscribe(onNext: { [weak self] in
                 self?.loadMoreNews()
             })
             .disposed(by: disposeBag)
         
-        // Search query changes with debounce
+        // Search query changes with debounce - skip initial + empty values
         searchQuery
             .skip(1) // Skip initial value
-            .debounce(.milliseconds(500), scheduler: MainScheduler.instance)
+            .debounce(.milliseconds(800), scheduler: MainScheduler.instance)
             .distinctUntilChanged()
+            .filter { !$0.isEmpty } // Don't search for empty strings
             .subscribe(onNext: { [weak self] _ in
                 self?.fetchNews(isRefresh: true)
             })
@@ -158,11 +162,14 @@ final class NewsListViewModel: NewsListViewModelProtocol {
                 
                 self.totalResults = response.totalResults
                 
+                // Filter out invalid articles (null titles, empty URLs)
+                let validArticles = response.articles.filter { $0.isValid }
+                
                 if isRefresh {
-                    self.articlesRelay.accept(response.articles)
+                    self.articlesRelay.accept(validArticles)
                 } else {
                     var currentArticles = self.articlesRelay.value
-                    currentArticles.append(contentsOf: response.articles)
+                    currentArticles.append(contentsOf: validArticles)
                     self.articlesRelay.accept(currentArticles)
                 }
                 
